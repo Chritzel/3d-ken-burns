@@ -3,31 +3,20 @@
 import torch
 import torchvision
 
-import base64
-import cupy
 import cv2
-import flask
-import getopt
-import gevent
-import gevent.pywsgi
-import glob
-import h5py
-import io
 import math
 import moviepy
 import moviepy.editor
 import numpy
-import os
-import random
-import re
-import scipy
-import scipy.io
-import shutil
+import getopt
 import sys
-import tempfile
-import time
-import urllib
-import zipfile
+
+from common import *
+
+from models.disparity_adjustment import *
+from models.disparity_estimation import *
+from models.disparity_refinement import *
+from models.pointcloud_inpainting import *
 
 ##########################################################
 
@@ -40,13 +29,6 @@ torch.backends.cudnn.enabled = True # make sure to use cudnn for computational p
 ##########################################################
 
 objCommon = {}
-
-exec(open('./common.py', 'r').read())
-
-exec(open('./models/disparity-estimation.py', 'r').read())
-exec(open('./models/disparity-adjustment.py', 'r').read())
-exec(open('./models/disparity-refinement.py', 'r').read())
-exec(open('./models/pointcloud-inpainting.py', 'r').read())
 
 ##########################################################
 
@@ -73,7 +55,7 @@ if __name__ == '__main__':
 
 	npyImage = cv2.resize(src=npyImage, dsize=(intWidth, intHeight), fx=0.0, fy=0.0, interpolation=cv2.INTER_AREA)
 
-	process_load(npyImage, {})
+	objCommon = process_load(npyImage, {}, objCommon)
 
 	objFrom = {
 		'fltCenterU': intWidth / 2.0,
@@ -86,14 +68,14 @@ if __name__ == '__main__':
 		'fltShift': 100.0,
 		'fltZoom': 1.25,
 		'objFrom': objFrom
-	})
+	}, objCommon)
 
-	npyResult = process_kenburns({
+	npyResult, objCommon = process_kenburns({
 		'fltSteps': numpy.linspace(0.0, 1.0, 75).tolist(),
 		'objFrom': objFrom,
 		'objTo': objTo,
 		'boolInpaint': True
-	})
+	}, objCommon)
 
 	moviepy.editor.ImageSequenceClip(sequence=[ npyFrame[:, :, ::-1] for npyFrame in npyResult + list(reversed(npyResult))[1:] ], fps=25).write_videofile(arguments_strOut)
 # end

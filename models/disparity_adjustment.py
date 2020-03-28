@@ -1,3 +1,6 @@
+import torch
+import torchvision
+
 moduleMaskrcnn = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True).cuda().eval()
 
 def disparity_adjustment(tenImage, tenDisparity):
